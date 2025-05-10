@@ -1,19 +1,29 @@
 <template>
   <div class="login-root">
-    <!-- 顶部横向居中 logo和副标题 -->
-    <div class="logo-bar">
-      <div class="font-logo">Anycreator</div>
-      <div class="logo-title"><h1 style="font-family: '阿里妈妈刀隶体 Regular', sans-serif;">——私人服务的全能型AI助理</h1></div>
-    </div>
-    <!-- 中间头像选择与表单动画区域 -->
-    <div class="center-panel">
-      <RightPanel />
-    </div>
+    <!-- 顶部横向居中 logo和副标题，渐显动画 -->
+    <transition name="fadein">
+      <div class="logo-bar" v-if="show">
+        <div class="font-logo">Anycreator</div>
+        <div class="logo-title"><h1 style="font-family: '阿里妈妈刀隶体 Regular', sans-serif;">——一个私人服务的全能型AI助理</h1></div>
+      </div>
+    </transition>
+    <!-- 中间头像选择与表单动画区域，渐显动画 -->
+    <transition name="fadein" appear>
+      <div class="center-panel" v-if="show">
+        <RightPanel />
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import RightPanel from './login_subcomponent/RightPanel.vue'
+// 控制渐显动画的显示
+const show = ref(false)
+onMounted(() => {
+  setTimeout(() => { show.value = true }, 80) // 页面加载后渐显
+})
 </script>
 
 <style>
@@ -83,4 +93,11 @@ import RightPanel from './login_subcomponent/RightPanel.vue'
   position: relative;
 }
 .page-logo { display: none; }
+/* 渐显动画 */
+.fadein-enter-active, .fadein-leave-active {
+  transition: opacity 0.7s cubic-bezier(.4,0,.2,1);
+}
+.fadein-enter-from, .fadein-leave-to {
+  opacity: 0;
+}
 </style> 

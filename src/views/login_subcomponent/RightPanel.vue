@@ -10,7 +10,7 @@
         </div>
         <div class="avatar-left-group">
           <div class="avatar-btn avatar-left-btn" ref="leftAvatarRef" @click="toggleForm">
-            <img class="avatar avatar-left" src="/illustration.png" alt="左头像" />
+            <img class="avatar avatar-left" src="/fuzai.png" alt="左头像" />
           </div>
           <transition name="fade">
             <div
