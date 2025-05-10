@@ -4,13 +4,13 @@
     <div class="avatar-center">
       <div class="avatar-select-panel">
         <div class="avatar-text-simple">
-          <span>AI工具-福仔百宝箱</span>
+          <span>AI工具</span>
           <span class="avatar-text-divider">｜</span>
           <span>作者简介</span>
         </div>
         <div class="avatar-left-group">
           <div class="avatar-btn avatar-left-btn" ref="leftAvatarRef" @click="toggleForm">
-            <img class="avatar avatar-left" src="/fuzai.png" alt="左头像" />
+            <img class="avatar avatar-left" src="/illustration.png" alt="左头像" />
           </div>
           <transition name="fade">
             <div
@@ -145,9 +145,9 @@ onBeforeUnmount(() => {
   transform: scale(0.95);
 }
 .green-text {
-  margin-top: 24px;
+  margin-top: 50px;
   color: #22c55e4a;
-  font-size: 25px;
+  font-size: 20px;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
 .avatar-text-simple {
   position: absolute;
   top: -32px;
-  left: 50%;
+  left: 50.6%;
   transform: translateX(-50%);
   width: 384px;
   text-align: center;
