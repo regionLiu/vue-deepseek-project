@@ -1,0 +1,19 @@
+{
+  "name": "vue-login-register-template",
+  "version": "1.0.0",
+  "description": "基于Vue3的登录注册页面模板，参考Figma设计稿。",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "@vitejs/plugin-vue": "^4.0.0"
+  }
+} 
