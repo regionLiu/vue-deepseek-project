@@ -43,7 +43,7 @@ const formCardStyle = computed(() => {
   if (!showForm.value || !leftAvatarRef.value) return { display: 'none' }
   return {
     position: 'absolute',
-    right: 'calc(100% + 24px)', // 头像左侧24px间距
+    right: 'calc(100% + 2vw)',
     top: '50%',
     transform: 'translateY(-50%)',
     minWidth: '320px',
@@ -93,7 +93,8 @@ onBeforeUnmount(() => {
   justify-content: center;
   position: relative;
   width: 100vw;
-  gap: 32px;
+  gap: 2vw;
+  flex-wrap: wrap;
 }
 .avatar-left-group {
   position: relative;
@@ -102,15 +103,15 @@ onBeforeUnmount(() => {
 }
 .form-card-fixed {
   position: absolute;
-  right: calc(100% + 24px);
+  right: calc(100% + 2vw);
   top: 50%;
   transform: translateY(-50%);
   min-width: 320px;
   z-index: 1;
 }
 .avatar-btn {
-  width: 180px;
-  height: 180px;
+  width: clamp(100px, 18vw, 180px);
+  height: clamp(100px, 18vw, 180px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -123,8 +124,8 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 32px #22C55E44;
 }
 .avatar {
-  width: 180px;
-  height: 180px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12);
@@ -145,9 +146,9 @@ onBeforeUnmount(() => {
   transform: scale(0.95);
 }
 .green-text {
-  margin-top: 50px;
+  margin-top: 3vw;
   color: #22c55e4a;
-  font-size: 20px;
+  font-size: clamp(1rem, 2vw, 1.5rem);
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -158,9 +159,11 @@ onBeforeUnmount(() => {
   top: -32px;
   left: 50.6%;
   transform: translateX(-50%);
-  width: 384px;
+  width: 24vw;
+  min-width: 180px;
+  max-width: 384px;
   text-align: center;
-  font-size: 14px;
+  font-size: 1rem;
   color: #888;
   white-space: nowrap;
   z-index: 10;
@@ -197,6 +200,17 @@ onBeforeUnmount(() => {
   .form-card-animate {
     margin-right: 0;
     margin-top: 16px;
+  }
+}
+@media (max-width: 600px) {
+  .avatar-btn {
+    width: 100px;
+    height: 100px;
+  }
+  .avatar-text-simple {
+    font-size: 0.9rem;
+    width: 90vw;
+    min-width: 0;
   }
 }
 </style> 

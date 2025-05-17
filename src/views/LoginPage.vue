@@ -50,15 +50,16 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 180px;
-  margin-top: 40px;
+  height: auto;
+  min-height: 120px;
+  margin-top: 4vh;
   margin-bottom: 0;
   z-index: 10;
   background-color: #fbfbfb;
 }
 .font-logo {
   font-family: '阿里妈妈刀隶体 Regular', sans-serif;
-  font-size: 64px;
+  font-size: clamp(2.5rem, 7vw, 4rem); /* 响应式字体 */
   color: #22C55E;
   font-weight: 400;
   letter-spacing: 4px;
@@ -76,21 +77,25 @@ onMounted(() => {
   align-items: center;
 }
 .logo-title h1 {
-  font-size: 20px;
+  font-size: clamp(1rem, 3vw, 2rem); /* 响应式字体 */
   color: #000000;
   font-weight: 600;
   margin-top: 0;
   letter-spacing: 2px;
-  margin-left: 20%;
+  margin-left: 0;
   text-shadow: 0px 0px 4px #79df9fde;
 }
 .center-panel {
   width: 100vw;
-  height: calc(100vh - 260px);
+  min-height: 300px;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
+  flex-wrap: wrap;
+  padding-bottom: 4vh;
+  margin-top: 20vh;
 }
 .page-logo { display: none; }
 /* 渐显动画 */
@@ -99,5 +104,27 @@ onMounted(() => {
 }
 .fadein-enter-from, .fadein-leave-to {
   opacity: 0;
+}
+@media (max-width: 900px) {
+  .center-panel {
+    flex-direction: column;
+    padding-bottom: 2vh;
+  }
+  .logo-bar {
+    min-height: 80px;
+    margin-top: 2vh;
+  }
+}
+@media (max-width: 600px) {
+  .font-logo {
+    font-size: 2rem;
+  }
+  .logo-title h1 {
+    font-size: 1rem;
+  }
+  .center-panel {
+    min-height: 180px;
+    padding-bottom: 1vh;
+  }
 }
 </style> 

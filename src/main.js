@@ -3,13 +3,15 @@ import App from './App.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from './views/LoginPage.vue'
 import AIChat from './views/AIChat.vue'
+// 导入全局路由常量
+import { ROOT_PATH, LOGIN_PATH, AI_CHAT_PATH, NOT_FOUND_PATH } from './env.js'
 
 // 只保留 LoginPage 路由
 const routes = [
-  { path: '/', redirect: '/login' },
-  { path: '/login', component: LoginPage },
-  { path: '/:pathMatch(.*)*', redirect: '/login' },
-  { path: '/ai_chat', component: AIChat }
+  { path: ROOT_PATH, redirect: LOGIN_PATH },
+  { path: LOGIN_PATH, component: LoginPage },
+  { path: NOT_FOUND_PATH, redirect: LOGIN_PATH },
+  { path: AI_CHAT_PATH, component: AIChat }
 ]
 const router = createRouter({
   history: createWebHistory(),
