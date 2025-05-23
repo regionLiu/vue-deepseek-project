@@ -23,11 +23,20 @@
         <div class="chat-messages">
           <template v-for="(msg, idx) in messages" :key="idx">
             <div :class="['chat-bubble', msg.role === 'user' ? 'right' : 'left']">
-              <div class="bubble-content">{{ msg.content }}</div>
-              <!-- 新增：AI回复下方展示生成文件下载 -->
-              <template v-if="msg.role === 'ai'">
-                <div v-if="aiMetaList[idx] && aiMetaList[idx].doc_url" class="ai-doc-download">
-                  生成文件：<a href="javascript:void(0)" class="download-link">立即下载</a>
+              <div class="bubble-content">
+                <!-- 下载按钮气泡 -->
+                <template v-if="msg.role === 'ai' && msg.content && msg.content.type === 'download'">
+                  <a href="javascript:void(0)" class="download-link" @click="downloadDoc(msg.content.url)">点我下载</a>
+                </template>
+                <!-- 普通文本气泡 -->
+                <template v-else>
+                  {{ msg.content }}
+                </template>
+              </div>
+              <!-- 流式：只要aiMetaList[idx] && aiMetaList[idx].doc_url有值，文本下方新起一行显示下载按钮 -->
+              <template v-if="msg.role === 'ai' && aiMetaList[idx] && aiMetaList[idx].doc_url">
+                <div class="ai-doc-download">
+                  <a href="javascript:void(0)" class="download-link" @click="downloadDoc(aiMetaList[idx].doc_url)">点我下载</a>
                 </div>
               </template>
             </div>
@@ -67,9 +76,16 @@ const fileName = ref('')
 const sending = ref(false)
 const router = useRouter()
 let lastContent = ''
+const DOWNLOAD_TYPES = ['excel', 'word', 'mind_summarize']
 function onFileChange(e) {
   file.value = e.target.files[0] || null
   fileName.value = file.value ? file.value.name : ''
+}
+function scrollToBottom() {
+  nextTick(() => {
+    const msgList = document.querySelector('.chat-messages')
+    if (msgList) msgList.scrollTop = msgList.scrollHeight
+  })
 }
 // 发送AI对话请求（带文件上传）
 async function sendAIChat() {
@@ -89,21 +105,21 @@ async function sendAIChat() {
     if (text) {
       messages.value.push({ role: 'user', content: text })
       input.value = ''
+      scrollToBottom()
     }
     file.value = null
     fileName.value = ''
-    // 滚动到底部
-    nextTick(() => {
-      const msgList = document.querySelector('.chat-messages')
-      if (msgList) msgList.scrollTop = msgList.scrollHeight
-    })
+    // push加载中气泡
+    messages.value.push({ role: 'ai', content: '加载中...' })
+    aiMetaList.value.push(null)
+    const loadingMsgIdx = messages.value.length - 1
+    await nextTick()
+    scrollToBottom()
     // 发起AI对话请求
     const res = await fetch(`${BASE_URL}${AI_CHAT_STREAM_API}`, {
       method: 'POST',
       body: formData
     })
-    console.log('响应状态', res.status)
-    console.log('响应头', Array.from(res.headers.entries()))
     // 401未授权，跳转到登录页
     if (res.status === 401) {
       router.push('/login')
@@ -111,48 +127,37 @@ async function sendAIChat() {
     }
     // 判断是否流式响应
     const isStream = res.headers.get('X-Stream') === 'true'
+
     if (!res.ok) throw new Error('请求失败')
     if (isStream) {
-      // 流式响应，逐行解析JSON，逐字显示AI回复内容
-      let aiMsg = ''
+      let fullContent = ''
       let lastDocUrl = ''
-      messages.value.push({ role: 'ai', content: '' })
-      aiMetaList.value.push(null) // 先占位
-      const aiMsgObj = messages.value[messages.value.length - 1]
-      const aiMetaObj = { doc_url: '' }
       const reader = res.body.getReader()
       const decoder = new TextDecoder('utf-8')
-      let buffer = ''
       let done = false
       while (!done) {
         const { value, done: doneReading } = await reader.read()
         done = doneReading
         if (value) {
-          buffer += decoder.decode(value)
-          // 按行分割处理
-          let lines = buffer.split('\n')
-          buffer = lines.pop() // 最后一行可能是不完整的，留到下次
+          let chunk = decoder.decode(value).trim()
+          if (!chunk) continue
+          let lines = chunk.split(/[\r\n]+/)
           for (const line of lines) {
+            if (!line.trim()) continue
             let cleanLine = line.trim()
-            if (!cleanLine) continue
             if (cleanLine.startsWith('data:')) {
               cleanLine = cleanLine.slice(5).trim()
             }
             try {
-              const data = JSON.parse(cleanLine)
-              const newContent = data.data || ''
-              // 处理meta.doc_url
-              if (data.meta && data.meta.doc_url) {
-                aiMetaObj.doc_url = data.meta.doc_url
-              }
-              aiMetaList.value[messages.value.length - 1] = { ...aiMetaObj }
-              // 替换流式响应内容追加部分：
-              // 原来是逐字追加，现在每收到一段content就整体追加
+              const resp = JSON.parse(cleanLine)
+              const newContent = resp.data || ''
               if (newContent) {
-                aiMsgObj.content += newContent
-                await nextTick()
-                const msgList = document.querySelector('.chat-messages')
-                if (msgList) msgList.scrollTop = msgList.scrollHeight
+                fullContent += newContent
+                messages.value[loadingMsgIdx].content = fullContent
+                scrollToBottom()
+              }
+              if (resp.meta && resp.meta.doc_url) {
+                lastDocUrl = resp.meta.doc_url
               }
             } catch (e) {
               console.error('流式响应解析失败:', cleanLine, e)
@@ -160,10 +165,15 @@ async function sendAIChat() {
           }
         }
       }
+      // 结束后push按钮气泡
+      if (lastDocUrl) {
+        messages.value.push({ role: 'ai', content: { type: 'download', url: lastDocUrl } })
+        aiMetaList.value.push(null)
+        scrollToBottom()
+      }
     } else {
       // 非流式，直接展示完整AI回复
       const text = await res.text()
-      console.log('响应体', text) // 打印原始响应体内容
       let data
       try {
         // 只取最后一行非空内容
@@ -174,22 +184,23 @@ async function sendAIChat() {
         console.error('原始响应体不是合法JSON:', text)
         throw new Error('返回内容不是合法JSON')
       }
-      const aiMsg = (data.data ?? '[无AI回复内容]')
-      messages.value.push({ role: 'ai', content: aiMsg })
-      // 检查meta.doc_url
-      if (data.meta && data.meta.doc_url) {
-        aiMetaList.value.push({ doc_url: data.meta.doc_url })
-      } else {
+      const requestType = CHAT_MODE_MAP[selectedMode.value]
+      if (requestType === 'excel') {
+        // 移除"加载中..."气泡
+        messages.value.splice(loadingMsgIdx, 1)
+        aiMetaList.value.splice(loadingMsgIdx, 1)
+        // 只显示下载按钮气泡
+        messages.value.push({ role: 'ai', content: { type: 'download', url: data.data } })
         aiMetaList.value.push(null)
+        scrollToBottom()
+      } else {
+        // 普通文本类型
+        messages.value[loadingMsgIdx].content = data.data ?? '[无AI回复内容]'
+        aiMetaList.value[loadingMsgIdx] = null
+        scrollToBottom()
       }
     }
-    // 滚动到底部
-    nextTick(() => {
-      const msgList = document.querySelector('.chat-messages')
-      if (msgList) msgList.scrollTop = msgList.scrollHeight
-    })
   } catch (err) {
-    console.error('请求异常', err)
     alert('请求失败，请重试')
   } finally {
     sending.value = false // 恢复按钮和输入框
@@ -199,6 +210,37 @@ async function sendAIChat() {
 function handleKeydown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     sendAIChat()
+  }
+}
+// 新增：AI生成文件下载
+async function downloadDoc(url) {
+  const access_token = localStorage.getItem('access_token')
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${access_token}`
+      }
+    })
+    if (res.status === 401) {
+      router.push('/login')
+      return
+    }
+    if (!res.ok) throw new Error('下载失败')
+    const blob = await res.blob()
+    // 文件名直接取url最后一段
+    const filename = url.split('/').pop() || '下载文件'
+    // 触发下载
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(link.href)
+  } catch (err) {
+    alert('下载失败，请重试')
   }
 }
 </script>
